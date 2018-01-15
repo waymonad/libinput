@@ -211,20 +211,20 @@ intToMiddleEmulation #{const LIBINPUT_CONFIG_MIDDLE_EMULATION_ENABLED}  = Middle
 
 
 data ScrollMethod
-    = ScrollNoSCROLL
+    = ScrollNoScroll
     | Scroll2fg
     | SrollEdge
     | ScrollOnButtonDown
     deriving (Eq, Show, Read)
 
 scrollMethodToInt :: Num a => ScrollMethod -> a
-scrollMethodToInt ScrollNoSCROLL     = #{const LIBINPUT_CONFIG_SCROLL_NO_SCROLL}
+scrollMethodToInt ScrollNoScroll     = #{const LIBINPUT_CONFIG_SCROLL_NO_SCROLL}
 scrollMethodToInt Scroll2fg          = #{const LIBINPUT_CONFIG_SCROLL_2FG}
 scrollMethodToInt SrollEdge          = #{const LIBINPUT_CONFIG_SCROLL_EDGE}
 scrollMethodToInt ScrollOnButtonDown = #{const LIBINPUT_CONFIG_SCROLL_ON_BUTTON_DOWN}
 
 intToScrollMethod :: (Eq a, Num a) => a -> ScrollMethod
-intToScrollMethod #{const LIBINPUT_CONFIG_SCROLL_NO_SCROLL}      = ScrollNoSCROLL
+intToScrollMethod #{const LIBINPUT_CONFIG_SCROLL_NO_SCROLL}      = ScrollNoScroll
 intToScrollMethod #{const LIBINPUT_CONFIG_SCROLL_2FG}            = Scroll2fg
 intToScrollMethod #{const LIBINPUT_CONFIG_SCROLL_EDGE}           = SrollEdge
 intToScrollMethod #{const LIBINPUT_CONFIG_SCROLL_ON_BUTTON_DOWN} = ScrollOnButtonDown
@@ -535,7 +535,7 @@ foreign import ccall unsafe "libinput_device_config_scroll_get_methods" c_scroll
 getScrollMethods :: InputDevice -> IO [ScrollMethod]
 getScrollMethods (InputDevice ptr) = do
     methods <- c_scroll_get_methods ptr
-    let none     = if scrollMethodToInt ScrollNoSCROLL     .&. methods /= 0 then (ScrollNoSCROLL    :) else id
+    let none     = if scrollMethodToInt ScrollNoScroll     .&. methods /= 0 then (ScrollNoScroll    :) else id
         flat     = if scrollMethodToInt Scroll2fg          .&. methods /= 0 then (Scroll2fg         :) else id
         adaptive = if scrollMethodToInt SrollEdge          .&. methods /= 0 then (SrollEdge         :) else id
         onbdown  = if scrollMethodToInt ScrollOnButtonDown .&. methods /= 0 then (ScrollOnButtonDown:) else id
@@ -550,7 +550,7 @@ setScrollButton (InputDevice ptr) button = intToConfigStatus <$> c_scroll_set_bu
 foreign import ccall unsafe "libinput_device_config_scroll_set_method" c_scroll_set_method :: Ptr InputDevice -> CInt -> IO CInt
 
 setScrollMethod :: InputDevice -> ScrollMethod -> IO ConfigStatus
-setScrollMethod (InputDevice ptr) method = intToConfigStatus <$> c_scroll_set_button ptr (scrollMethodToInt method)
+setScrollMethod (InputDevice ptr) method = intToConfigStatus <$> c_scroll_set_method ptr (scrollMethodToInt method)
 
 
 
