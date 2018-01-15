@@ -96,7 +96,7 @@ where
 
 #include <libinput.h>
 
-import Data.Bits ((.&.))
+import Data.Bits ((.&.), (.|.))
 import Data.ByteString.Unsafe (unsafePackCString)
 import Data.Text (Text)
 import Data.Word (Word32)
@@ -579,33 +579,33 @@ setNaturalScrollenabled (InputDevice ptr) method = intToConfigStatus <$> c_scrol
 
 
 
-
-
-foreign import ccall unsafe "libinput_device_config_send_events_get_default_mode" c_send_events_get_default_mode :: Ptr InputDevice -> IO Word32
-
-getSendEventsDefaultMode :: InputDevice -> IO SendEventsMode
-getSendEventsDefaultMode = fmap intToSendEventsMode . c_send_events_get_default_mode . unID
-
-foreign import ccall unsafe "libinput_device_config_send_events_get_mode" c_send_events_get_mode :: Ptr InputDevice -> IO Word32
-
-getSendEventsMode :: InputDevice -> IO SendEventsMode
-getSendEventsMode = fmap intToSendEventsMode . c_send_events_get_mode . unID
-
-foreign import ccall unsafe "libinput_device_config_send_events_get_modes" c_send_events_get_modes :: Ptr InputDevice -> IO Word32
-
-getSendEventsModes :: InputDevice -> IO [SendEventsMode]
-getSendEventsModes (InputDevice ptr) = do
-    modes <- c_scroll_get_methods ptr
+readSendEventsModes :: Word32 -> [SendEventsMode]
+readSendEventsModes modes = 
     let none     = if sendEventsModeToInt SendEventsEnabled                 .&. modes /= 0 then (SendEventsEnabled                :) else id
         flat     = if sendEventsModeToInt SendEventsDisabled                .&. modes /= 0 then (SendEventsDisabled               :) else id
         adaptive = if sendEventsModeToInt SendEventsDisabledOnExternalMouse .&. modes /= 0 then (SendEventsDisabledOnExternalMouse:) else id
 
-     in pure . none . flat . adaptive $ []
+     in none . flat . adaptive $ []
+
+foreign import ccall unsafe "libinput_device_config_send_events_get_default_mode" c_send_events_get_default_mode :: Ptr InputDevice -> IO Word32
+
+getSendEventsDefaultMode :: InputDevice -> IO [SendEventsMode]
+getSendEventsDefaultMode = fmap readSendEventsModes . c_send_events_get_default_mode . unID
+
+foreign import ccall unsafe "libinput_device_config_send_events_get_mode" c_send_events_get_mode :: Ptr InputDevice -> IO Word32
+
+getSendEventsMode :: InputDevice -> IO [SendEventsMode]
+getSendEventsMode = fmap readSendEventsModes . c_send_events_get_mode . unID
+
+foreign import ccall unsafe "libinput_device_config_send_events_get_modes" c_send_events_get_modes :: Ptr InputDevice -> IO Word32
+
+getSendEventsModes :: InputDevice -> IO [SendEventsMode]
+getSendEventsModes (InputDevice ptr) = readSendEventsModes <$> c_scroll_get_methods ptr
 
 foreign import ccall unsafe "libinput_device_config_send_events_set_mode" c_send_events_set_mode :: Ptr InputDevice -> Word32 -> IO CInt
 
-setSendEventsMode :: InputDevice -> SendEventsMode -> IO ConfigStatus
-setSendEventsMode (InputDevice ptr) mode = intToConfigStatus <$> c_send_events_set_mode ptr (sendEventsModeToInt mode)
+setSendEventsMode :: InputDevice -> [SendEventsMode] -> IO ConfigStatus
+setSendEventsMode (InputDevice ptr) modes = intToConfigStatus <$> c_send_events_set_mode ptr (foldr (.|.) 0 $ map sendEventsModeToInt modes)
 
 
 
