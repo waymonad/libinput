@@ -91,6 +91,11 @@ module System.InputDevice
     , getTapEnabled
     , setTapEnabled
     , getTapFingerCount
+
+    , getDeviceSysname
+    , getDeviceName
+    , getDeviceVendor
+    , getDeviceProduct
     )
 where
 
@@ -118,6 +123,28 @@ foreign import ccall unsafe "libinput_device_get_device_group" c_get_device_grou
 getInputDeviceGroup :: InputDevice -> IO InputDeviceGroup
 getInputDeviceGroup (InputDevice ptr) =
     InputDeviceGroup <$> throwErrnoIfNull "getInputDeviceGroup" (c_get_device_group ptr)
+
+
+foreign import ccall unsafe "libinput_device_get_sysname" c_get_sysname :: Ptr InputDevice -> IO CString
+
+getDeviceSysname :: InputDevice -> IO Text
+getDeviceSysname (InputDevice dev) = fmap E.decodeUtf8 . unsafePackCString =<< c_get_sysname dev
+
+foreign import ccall unsafe "libinput_device_get_name" c_get_name :: Ptr InputDevice -> IO CString
+
+getDeviceName :: InputDevice -> IO Text
+getDeviceName (InputDevice dev) = fmap E.decodeUtf8 . unsafePackCString =<< c_get_name dev
+
+foreign import ccall unsafe "libinput_device_get_id_product" c_get_product :: Ptr InputDevice -> IO CInt
+
+getDeviceProduct :: InputDevice -> IO Int
+getDeviceProduct = fmap fromIntegral . c_get_product . unID
+
+
+foreign import ccall unsafe "libinput_device_get_id_vendor" c_get_vendor :: Ptr InputDevice -> IO CInt
+
+getDeviceVendor :: InputDevice -> IO Int
+getDeviceVendor = fmap fromIntegral . c_get_vendor . unID
 
 
 data AccelProfile
