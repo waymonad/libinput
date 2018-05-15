@@ -5,15 +5,15 @@ module System.InputDevice
 
     , AccelProfile (..)
     , ClickMethod (..)
+    , ConfigStatus (..)
+    , DWTState (..)
     , DragLockState (..)
     , DragState (..)
     , MiddleEmulationState (..)
     , ScrollMethod (..)
     , SendEventsMode (..)
-    , ConfigStatus (..)
     , TapButtonMap (..)
     , TapState (..)
-
 
     , statusToText
     , getDefaultAccelProfile
